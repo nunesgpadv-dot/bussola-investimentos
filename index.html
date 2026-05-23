@@ -1,0 +1,1806 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#163b57">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Bússola">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <title>Bússola de Investimentos</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #142938;
+      --muted: #5b6d78;
+      --line: #d9e3e7;
+      --paper: #f7fafb;
+      --panel: #ffffff;
+      --navy: #163b57;
+      --teal: #2f6b73;
+      --mint: #e7f2ef;
+      --amber: #fff2cc;
+      --blue: #1d6f99;
+      --orange: #d96c2c;
+      --green: #2f7d59;
+      --shadow: 0 10px 28px rgba(20, 41, 56, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.35;
+    }
+
+    header {
+      background: var(--navy);
+      color: #fff;
+      padding: calc(14px + env(safe-area-inset-top)) 16px 14px;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: clamp(20px, 4vw, 30px);
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    .status {
+      font-size: 13px;
+      color: #dbe9ee;
+      white-space: nowrap;
+    }
+
+    nav {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      max-width: 1180px;
+      margin: 14px auto 0;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+
+    nav::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab {
+      appearance: none;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      min-height: 40px;
+      padding: 0 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .tab[aria-selected="true"] {
+      background: #fff;
+      color: var(--navy);
+      border-color: #fff;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 14px 12px 32px;
+    }
+
+    section[hidden] {
+      display: none;
+    }
+
+    .grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .kpis {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .two {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel h2,
+    .panel h3 {
+      margin: 0;
+      padding: 11px 12px;
+      font-size: 15px;
+      background: var(--teal);
+      color: #fff;
+      letter-spacing: 0;
+    }
+
+    .panel-body {
+      padding: 12px;
+    }
+
+    .kpi {
+      min-height: 98px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 13px 14px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .kpi small {
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .kpi strong {
+      font-size: clamp(20px, 5.5vw, 28px);
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+
+    .kpi span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 280px;
+    }
+
+    .allocation {
+      display: grid;
+      gap: 8px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: minmax(88px, 1fr) minmax(90px, auto);
+      gap: 10px;
+      align-items: center;
+    }
+
+    .bar {
+      height: 12px;
+      background: #edf3f5;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+
+    .bar i {
+      display: block;
+      height: 100%;
+      background: var(--blue);
+      width: var(--w);
+    }
+
+    .split i:nth-child(1) {
+      background: var(--green);
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .data-table th,
+    .data-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 9px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .data-table th {
+      background: var(--navy);
+      color: #fff;
+      position: sticky;
+      top: 106px;
+      z-index: 1;
+    }
+
+    .data-table td.num,
+    .data-table th.num {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .scroll {
+      overflow-x: auto;
+      max-height: 62vh;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    label.field {
+      display: grid;
+      gap: 6px;
+      font-weight: 700;
+      color: var(--ink);
+      font-size: 13px;
+    }
+
+    input[type="number"],
+    input[type="date"] {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid #c9d8de;
+      border-radius: 8px;
+      padding: 9px 10px;
+      background: var(--amber);
+      color: var(--ink);
+      font: inherit;
+      font-weight: 650;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .button {
+      appearance: none;
+      border: 1px solid var(--navy);
+      background: var(--navy);
+      color: #fff;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 8px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .button.secondary {
+      color: var(--navy);
+      background: #fff;
+    }
+
+    .button.compact {
+      min-height: 36px;
+      padding: 0 12px;
+      font-size: 13px;
+    }
+
+    .snapshot-meta {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .note {
+      margin-top: 12px;
+      background: var(--mint);
+      color: var(--ink);
+      border: 1px solid #cddfda;
+      padding: 11px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    .phase-tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: var(--mint);
+      color: var(--teal);
+      font-weight: 800;
+      font-size: 12px;
+    }
+
+    .criteria-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .criteria-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      padding: 8px 0;
+      font-size: 13px;
+    }
+
+    .criteria-list li:last-child {
+      border-bottom: 0;
+    }
+
+    .metric-input {
+      width: 92px;
+      min-height: 34px;
+      border: 1px solid #c9d8de;
+      border-radius: 7px;
+      background: var(--amber);
+      padding: 6px 8px;
+      font: inherit;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 26px;
+      padding: 0 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .badge.ok {
+      background: #ddefe8;
+      color: #1e6243;
+    }
+
+    .badge.warn {
+      background: #fff2cc;
+      color: #875900;
+    }
+
+    .badge.bad {
+      background: #fde2df;
+      color: #9f2c21;
+    }
+
+    .source-links {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .source-links a {
+      color: var(--blue);
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .source-links a:focus,
+    .source-links a:hover {
+      text-decoration: underline;
+    }
+
+    .summary-box {
+      display: grid;
+      gap: 6px;
+      padding: 11px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .summary-box strong {
+      font-size: 15px;
+    }
+
+    .summary-box span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .switch-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .switch-row input {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--teal);
+    }
+
+    .form-section-title {
+      grid-column: 1 / -1;
+      margin: 8px 0 0;
+      padding: 8px 0 4px;
+      border-bottom: 2px solid var(--teal);
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--teal);
+      letter-spacing: 0.02em;
+    }
+
+    .form-section-title:first-child {
+      margin-top: 0;
+    }
+
+    .sync-panel {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 12px;
+      background: var(--mint);
+      border: 1px solid #cddfda;
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+
+    .sync-panel .sync-info {
+      flex: 1;
+      min-width: 180px;
+    }
+
+    .sync-panel .sync-info small {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .sync-panel .sync-info strong {
+      font-size: 14px;
+    }
+
+    .sync-delta {
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .sync-delta.up { color: var(--green); }
+    .sync-delta.down { color: #9f2c21; }
+    .sync-delta.flat { color: var(--muted); }
+
+    .sync-history-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    .sync-history-table th,
+    .sync-history-table td {
+      padding: 6px 8px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .sync-history-table th {
+      font-weight: 800;
+      color: var(--muted);
+    }
+
+    .score-bar {
+      display: flex;
+      gap: 3px;
+      align-items: center;
+    }
+
+    .score-bar .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #d9e3e7;
+    }
+
+    .score-bar .dot.pass { background: var(--green); }
+    .score-bar .dot.fail { background: #d96c2c; }
+    .score-bar .dot.miss { background: #d9e3e7; }
+
+    .score-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-left: 4px;
+    }
+
+    .criteria-threshold {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .criteria-threshold select,
+    .criteria-threshold input {
+      min-height: 32px;
+      border: 1px solid #c9d8de;
+      border-radius: 6px;
+      padding: 4px 6px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      background: var(--amber);
+    }
+
+    .criteria-threshold select {
+      width: 50px;
+    }
+
+    .criteria-threshold input {
+      width: 70px;
+      text-align: right;
+    }
+
+    @media (max-width: 880px) {
+      header {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .topline {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .status {
+        white-space: normal;
+      }
+
+      main {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      .kpis,
+      .two,
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .kpi {
+        min-height: 84px;
+      }
+
+      canvas {
+        height: 230px;
+      }
+
+      .data-table {
+        font-size: 12px;
+      }
+
+      .data-table th,
+      .data-table td {
+        padding: 8px 7px;
+      }
+
+      .data-table th {
+        top: 116px;
+      }
+
+      .metric-input {
+        width: 78px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topline">
+      <h1>Bússola de Investimentos</h1>
+      <div class="status" id="saveStatus">Alterações salvas neste aparelho</div>
+    </div>
+    <nav aria-label="Seções">
+      <button class="tab" data-tab="dash" aria-selected="true">Bússola</button>
+      <button class="tab" data-tab="compras">Aportes</button>
+      <button class="tab" data-tab="mensal">Mensal</button>
+      <button class="tab" data-tab="criterios">Critérios</button>
+      <button class="tab" data-tab="premissas">Premissas</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="dash">
+      <div class="grid kpis">
+        <div class="kpi"><small>Total investido</small><strong id="kTotal">-</strong><span id="kPhase">-</span></div>
+        <div class="kpi"><small>Objetivo</small><strong id="kGoal">-</strong><span id="kGoalDate">-</span></div>
+        <div class="kpi"><small>Reserva</small><strong id="kReserve">-</strong><span id="kReserveDate">-</span></div>
+        <div class="kpi"><small>Renda passiva/mês em 2035</small><strong id="kPassive">-</strong><span>Dividendos projetados</span></div>
+      </div>
+
+      <div class="grid two" style="margin-top:12px">
+        <div class="panel">
+          <h2>Valor atualmente investido</h2>
+          <div class="panel-body"><canvas id="barChart" aria-label="Gráfico de barras por classe"></canvas></div>
+        </div>
+        <div class="panel">
+          <h2>Caminho até o objetivo</h2>
+          <div class="panel-body"><canvas id="lineChart" aria-label="Gráfico de evolução patrimonial"></canvas></div>
+        </div>
+      </div>
+
+      <div class="grid two" style="margin-top:12px">
+        <div class="panel">
+          <h2>Próximo aporte</h2>
+          <div class="panel-body">
+            <div class="allocation" id="nextAllocation"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Regra pós-reserva</h2>
+          <div class="panel-body">
+            <div class="allocation" id="postAllocation"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:12px">
+        <h2>Sincronização de saldos</h2>
+        <div class="panel-body">
+          <div id="syncStatus"></div>
+          <div class="actions" style="margin-top:8px">
+            <button class="button compact" id="recordSync" type="button">Registrar saldo atual</button>
+            <button class="button compact secondary" id="toggleSyncHistory" type="button">Ver histórico</button>
+          </div>
+          <div id="syncHistoryContainer" hidden>
+            <table class="sync-history-table" id="syncHistoryTable"></table>
+          </div>
+        </div>
+      </div>
+
+      <p class="note">Reserva em CDB liquidez diária fica separada. RF longa é outro motor, com risco de marcação se vender antes do prazo.</p>
+    </section>
+
+    <section id="compras" hidden>
+      <div class="panel">
+        <h2>Plano de compras</h2>
+        <div class="scroll">
+          <table class="data-table" id="purchaseTable"></table>
+        </div>
+      </div>
+    </section>
+
+    <section id="mensal" hidden>
+      <div class="panel">
+        <h2>Cronograma mensal</h2>
+        <div class="panel-body">
+          <span class="phase-tag" id="monthCount">Jun/2026 a Dez/2035</span>
+        </div>
+        <div class="scroll">
+          <table class="data-table" id="monthlyTable"></table>
+        </div>
+      </div>
+    </section>
+
+    <section id="criterios" hidden>
+      <div class="grid two">
+        <div class="panel">
+          <h2>Critérios para ações</h2>
+          <div class="panel-body">
+            <ul class="criteria-list" id="stockCriteriaList"></ul>
+            <p class="note">Fontes-base: Fundamentei e Status Invest. Digite percentuais como aparecem nos sites: 18,5 significa 18,5%. Edite os limiares acima para ajustar a filtragem.</p>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Critérios para FIIs</h2>
+          <div class="panel-body">
+            <ul class="criteria-list" id="fiiCriteriaList"></ul>
+            <p class="note">Fontes-base: Funds Explorer e FIIs.com.br. Os links por ticker ficam na coluna Fontes. Edite os limiares acima para ajustar a filtragem.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:12px">
+        <h2>Recomendação do sistema</h2>
+        <div class="panel-body">
+          <label class="switch-row">
+            <input type="checkbox" id="applyScreenerToPurchases">
+            <span>Usar apenas ativos aprovados no plano de compras</span>
+          </label>
+          <div class="actions" style="margin-top:0">
+            <button class="button compact" id="autoFillScreener" type="button">Preencher automaticamente</button>
+            <span class="snapshot-meta" id="screenerSnapshotInfo"></span>
+          </div>
+          <div class="grid two">
+            <div class="summary-box" id="stockRecommendationSummary"></div>
+            <div class="summary-box" id="fiiRecommendationSummary"></div>
+          </div>
+          <p class="note">Com a base automática carregada, dado ausente vira <strong>Não recomendar</strong> por falta de comprovação. O sistema só recomenda compra quando todos os critérios passam.</p>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:12px">
+        <h2>Checklist de ações</h2>
+        <div class="scroll">
+          <table class="data-table" id="stockScreenTable"></table>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:12px">
+        <h2>Checklist de FIIs</h2>
+        <div class="scroll">
+          <table class="data-table" id="fiiScreenTable"></table>
+        </div>
+      </div>
+    </section>
+
+    <section id="premissas" hidden>
+      <div class="panel">
+        <h2>Premissas editáveis</h2>
+        <div class="panel-body">
+          <div class="form-grid" id="inputs"></div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:12px">
+        <h2>Taxas CDB por ano</h2>
+        <div class="panel-body">
+          <div class="form-grid" id="cdbRateInputs"></div>
+          <p class="note">Taxas líquidas estimadas para CDB liquidez diária. Após 2030 usa a taxa definida em "CDB líquido após 2030".</p>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:12px">
+        <div class="panel-body">
+          <div class="actions">
+            <button class="button" id="exportCsv">Baixar CSV</button>
+            <button class="button secondary" id="exportJson">Baixar JSON</button>
+            <button class="button secondary" id="reset">Restaurar padrão</button>
+          </div>
+          <p class="note">Este artefato organiza uma estratégia operacional. Não é recomendação personalizada de investimento.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+    const BRL2 = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const PCT = new Intl.NumberFormat('pt-BR', { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    const MONTH = new Intl.DateTimeFormat('pt-BR', { month: 'short', year: '2-digit' });
+
+    const defaults = {
+      referenceDate: '2026-05-18',
+      reserve: 41946.7439392927,
+      stocks: 3396.24589510653,
+      fiis: 5096.39573515528,
+      rfLong: 0,
+      reserveTarget: 60000,
+      goal: 800000,
+      monthly: 3325,
+      phase1ReservePct: 0.50,
+      phase1RvPct: 0.50,
+      postRvPct: 0.80,
+      postRfLongPct: 0.20,
+      stocksWithinRv: 0.40,
+      fiisWithinRv: 0.60,
+      rfLongAnnual: 0.105,
+      stockDivAnnual: 0.05,
+      stockAppAnnual: 0.08,
+      fiiDivAnnual: 0.10,
+      fiiAppAnnual: 0.03,
+      cdbAfter2030: 0.0765,
+      applyScreenerToPurchases: false,
+      cdbRate2026: 0.11475,
+      cdbRate2027: 0.0935,
+      cdbRate2028: 0.085,
+      cdbRate2029: 0.08075,
+      cdbRate2030: 0.0765,
+      stockCriteriaThresholds: { cagr: 5, roe: 15, margin: 10, debtEbitda: 3, pl: 15, dy: 4, payout: 80 },
+      fiiCriteriaThresholds: { adminFee: 1, vacancy: 3, dy12m: 7, pvp: 1, liquidez: 500 },
+      syncHistory: []
+    };
+
+    function getCdbRates() {
+      return {
+        2026: Number(state.cdbRate2026),
+        2027: Number(state.cdbRate2027),
+        2028: Number(state.cdbRate2028),
+        2029: Number(state.cdbRate2029),
+        2030: Number(state.cdbRate2030)
+      };
+    }
+    const storageKey = 'bussola-investimentos-mobile-v1';
+
+    const fieldGroups = [
+      { title: 'Saldos atuais', fields: [
+        ['reserve', 'Reserva CDB liquidez diária', 'money'],
+        ['stocks', 'Ações', 'money'],
+        ['fiis', 'FIIs', 'money'],
+        ['rfLong', 'RF longa', 'money'],
+      ]},
+      { title: 'Metas', fields: [
+        ['reserveTarget', 'Meta da reserva', 'money'],
+        ['goal', 'Objetivo de patrimônio', 'money'],
+        ['monthly', 'Aporte mensal', 'money'],
+      ]},
+      { title: 'Alocação — Fase 1 (completar reserva)', fields: [
+        ['phase1ReservePct', 'Para reserva CDB', 'pct'],
+        ['phase1RvPct', 'Para renda variável', 'pct'],
+      ]},
+      { title: 'Alocação — Pós-reserva', fields: [
+        ['postRvPct', 'Para renda variável', 'pct'],
+        ['postRfLongPct', 'Para RF longa', 'pct'],
+      ]},
+      { title: 'Distribuição dentro de RV', fields: [
+        ['stocksWithinRv', 'Ações', 'pct'],
+        ['fiisWithinRv', 'FIIs', 'pct'],
+      ]},
+      { title: 'Retornos estimados (a.a.)', fields: [
+        ['rfLongAnnual', 'RF longa', 'pct'],
+        ['stockDivAnnual', 'Dividend yield ações', 'pct'],
+        ['stockAppAnnual', 'Apreciação ações', 'pct'],
+        ['fiiDivAnnual', 'Dividend yield FIIs', 'pct'],
+        ['fiiAppAnnual', 'Apreciação FIIs', 'pct'],
+        ['cdbAfter2030', 'CDB líquido após 2030', 'pct'],
+      ]},
+    ];
+
+    const fields = fieldGroups.flatMap(g => g.fields);
+
+    const stocks = [
+      ['ITSA4', 'Itaúsa', 0.08], ['BBAS3', 'Banco do Brasil', 0.07], ['BBSE3', 'BB Seguridade', 0.06],
+      ['BBDC4', 'Bradesco', 0.06], ['EGIE3', 'Engie Brasil', 0.06], ['TAEE11', 'Taesa', 0.05],
+      ['CPFE3', 'CPFL Energia', 0.05], ['CMIG4', 'Cemig', 0.05], ['SAPR11', 'Sanepar', 0.05],
+      ['SBSP3', 'Sabesp', 0.04], ['VALE3', 'Vale', 0.05], ['PETR4', 'Petrobras', 0.05],
+      ['WEGE3', 'WEG', 0.06], ['ABEV3', 'Ambev', 0.04], ['VIVT3', 'Telefônica', 0.04],
+      ['FLRY3', 'Fleury', 0.04], ['PSSA3', 'Porto Seguro', 0.04], ['TOTS3', 'Totvs', 0.04],
+      ['SLCE3', 'SLC Agrícola', 0.03], ['RDOR3', 'Rede D\'Or', 0.04]
+    ];
+    const fiis = [
+      ['MXRF11', 'Maxi Renda', 0.06], ['KNCR11', 'Kinea Rendimentos', 0.06], ['RBRR11', 'RBR High Grade', 0.05],
+      ['HGLG11', 'CSHG Logística', 0.06], ['XPLG11', 'XP Log', 0.05], ['XPML11', 'XP Malls', 0.05],
+      ['HGRU11', 'CSHG Renda Urbana', 0.05], ['KNRI11', 'Kinea Renda Imobiliária', 0.05],
+      ['HGCR11', 'CSHG Recebíveis', 0.05], ['RECR11', 'REC Recebíveis', 0.05],
+      ['BTLG11', 'BTG Logística', 0.05], ['VILG11', 'Vinci Logística', 0.04],
+      ['IRDM11', 'Iridium Recebíveis', 0.05], ['CPTS11', 'Capitânia Securities', 0.05],
+      ['VISC11', 'Vinci Shopping', 0.05], ['HSML11', 'HSI Malls', 0.04],
+      ['PVBI11', 'VBI Prime', 0.04], ['VGIR11', 'Valora RE', 0.04],
+      ['RZAG11', 'Riza Akin', 0.03], ['RBRF11', 'RBR Alpha', 0.03]
+    ];
+
+    function getStockCriteria() {
+      const t = state.stockCriteriaThresholds || defaults.stockCriteriaThresholds;
+      return [
+        ['cagr', 'CAGR %', value => value > t.cagr, `maior que ${t.cagr}%`, '>', t.cagr],
+        ['roe', 'ROE %', value => value > t.roe, `maior que ${t.roe}%`, '>', t.roe],
+        ['margin', 'ML %', value => value > t.margin, `maior que ${t.margin}%`, '>', t.margin],
+        ['debtEbitda', 'DL/EBITDA', value => value < t.debtEbitda, `menor que ${t.debtEbitda}x`, '<', t.debtEbitda],
+        ['pl', 'P/L', value => value < t.pl, `menor que ${t.pl}`, '<', t.pl],
+        ['dy', 'DY %', value => value > t.dy, `maior que ${t.dy}%`, '>', t.dy],
+        ['payout', 'Payout %', value => value < t.payout, `menor que ${t.payout}%`, '<', t.payout],
+      ];
+    }
+
+    function getFiiCriteria() {
+      const t = state.fiiCriteriaThresholds || defaults.fiiCriteriaThresholds;
+      return [
+        ['adminFee', 'Taxa adm. %', value => value < t.adminFee, `menor que ${t.adminFee}%`, '<', t.adminFee],
+        ['vacancy', 'Vacância %', value => value < t.vacancy, `menor que ${t.vacancy}%`, '<', t.vacancy],
+        ['dy12m', 'DY 12m %', value => value > t.dy12m, `maior que ${t.dy12m}%`, '>', t.dy12m],
+        ['pvp', 'P/VP', value => value <= t.pvp, `menor ou igual a ${t.pvp}`, '<=', t.pvp],
+        ['liquidez', 'Liquidez (mil)', value => value > t.liquidez, `maior que ${t.liquidez}`, '>', t.liquidez],
+      ];
+    }
+
+    let stockCriteria, fiiCriteria;
+
+    function refreshCriteria() {
+      stockCriteria = getStockCriteria();
+      fiiCriteria = getFiiCriteria();
+    }
+
+    const screenerSnapshot = {
+      date: '2026-05-18',
+      stocks: {
+        ITSA4:  { cagr: 19.2,  roe: 18.83, margin: 203.02, debtEbitda: 0.22,  pl: 8.46,  dy: 7.5,  payout: 50,  note: 'StatusInvest — referência estimada p/ DY e Payout' },
+        BBAS3:  { cagr: 3.4,   roe: 18.2,  margin: 24.8,   debtEbitda: '',     pl: 7.45,  dy: 8.5,  payout: 45,  note: 'Banco — DL/EBITDA não se aplica' },
+        BBSE3:  { cagr: 19.01, roe: 72.72, margin: 35.0,   debtEbitda: '',     pl: 7.21,  dy: 9.5,  payout: 80,  note: 'Seguradora — DL/EBITDA não se aplica' },
+        BBDC4:  { cagr: -2.1,  roe: 11.5,  margin: 15.0,   debtEbitda: '',     pl: 9.8,   dy: 5.5,  payout: 30,  note: 'Banco — DL/EBITDA não se aplica; referência estimada' },
+        EGIE3:  { cagr: -1.71, roe: 18.86, margin: 19.35,  debtEbitda: 3.18,  pl: 14.48, dy: 5.5,  payout: 75,  note: 'StatusInvest — referência estimada p/ DY e Payout' },
+        TAEE11: { cagr: -7.07, roe: 19.7,  margin: 33.52,  debtEbitda: 4.26,  pl: 8.52,  dy: 8.0,  payout: 90,  note: 'StatusInvest — referência estimada p/ DY e Payout' },
+        CPFE3:  { cagr: 12.5,  roe: 28.5,  margin: 15.8,   debtEbitda: 2.1,   pl: 8.2,   dy: 7.0,  payout: 55,  note: 'Referência estimada — verificar em StatusInvest' },
+        CMIG4:  { cagr: 15.0,  roe: 15.2,  margin: 12.4,   debtEbitda: 1.8,   pl: 6.5,   dy: 10.0, payout: 50,  note: 'Referência estimada — verificar em StatusInvest' },
+        SAPR11: { cagr: 4.21,  roe: 9.64,  margin: 16.66,  debtEbitda: 0.76,  pl: 9.29,  dy: 5.8,  payout: 40,  note: 'StatusInvest — referência estimada p/ DY e Payout' },
+        SBSP3:  { cagr: 15.0,  roe: 13.0,  margin: 22.3,   debtEbitda: 2.5,   pl: 12.0,  dy: 3.0,  payout: 25,  note: 'Referência estimada — verificar em StatusInvest' },
+        VALE3:  { cagr: -10.2, roe: 18.2,  margin: 27.3,   debtEbitda: 1.02,  pl: 6.3,   dy: 10.0, payout: 60,  note: 'StatusInvest — ROE/margin/PL ajustados, DY/Payout estimados' },
+        PETR4:  { cagr: 5.8,   roe: 22.5,  margin: 18.5,   debtEbitda: 1.2,   pl: 5.5,   dy: 12.0, payout: 55,  note: 'Referência estimada — verificar em StatusInvest' },
+        WEGE3:  { cagr: 21.85, roe: 35.43, margin: 15.64,  debtEbitda: -0.37, pl: 28.35, dy: 1.5,  payout: 50,  note: 'StatusInvest — referência estimada p/ DY e Payout' },
+        ABEV3:  { cagr: 2.0,   roe: 18.5,  margin: 15.2,   debtEbitda: -0.5,  pl: 14.5,  dy: 5.0,  payout: 70,  note: 'Referência estimada — verificar em StatusInvest' },
+        VIVT3:  { cagr: 7.0,   roe: 17.0,  margin: 11.0,   debtEbitda: 1.3,   pl: 13.5,  dy: 5.5,  payout: 100, note: 'Referência estimada — verificar em StatusInvest' },
+        FLRY3:  { cagr: 10.0,  roe: 14.5,  margin: 11.2,   debtEbitda: 1.8,   pl: 14.0,  dy: 3.5,  payout: 55,  note: 'Referência estimada — verificar em StatusInvest' },
+        PSSA3:  { cagr: 12.0,  roe: 18.0,  margin: 10.5,   debtEbitda: '',     pl: 9.5,   dy: 5.0,  payout: 40,  note: 'Seguradora — DL/EBITDA não se aplica; referência estimada' },
+        TOTS3:  { cagr: 15.0,  roe: 16.0,  margin: 12.0,   debtEbitda: 0.8,   pl: 22.0,  dy: 1.8,  payout: 40,  note: 'Referência estimada — verificar em StatusInvest' },
+        SLCE3:  { cagr: 8.0,   roe: 13.0,  margin: 18.0,   debtEbitda: 1.5,   pl: 10.0,  dy: 4.5,  payout: 45,  note: 'Referência estimada — verificar em StatusInvest' },
+        RDOR3:  { cagr: 18.0,  roe: 11.0,  margin: 8.5,    debtEbitda: 2.8,   pl: 25.0,  dy: 1.0,  payout: 25,  note: 'Referência estimada — verificar em StatusInvest' },
+      },
+      fiis: {
+        MXRF11: { adminFee: 0.9,  vacancy: 0,   dy12m: 12.05, pvp: 1.06, liquidez: 3500, note: 'Funds Explorer — liquidez estimada' },
+        KNCR11: { adminFee: 0.3,  vacancy: 0,   dy12m: 13.86, pvp: 1.03, liquidez: 5000, note: 'Funds Explorer — taxa e liquidez estimadas' },
+        RBRR11: { adminFee: 0.2,  vacancy: 0,   dy12m: 11.82, pvp: 0.9,  liquidez: 1200, note: 'Funds Explorer — liquidez estimada' },
+        HGLG11: { adminFee: 0.6,  vacancy: 3.5, dy12m: 8.51,  pvp: 0.94, liquidez: 4500, note: 'Funds Explorer — vacância e liquidez estimadas' },
+        XPLG11: { adminFee: 0.75, vacancy: 5.0, dy12m: 9.92,  pvp: 0.93, liquidez: 2500, note: 'Funds Explorer — taxa/vacância/liquidez estimadas' },
+        XPML11: { adminFee: 0.75, vacancy: 4.5, dy12m: 10.15, pvp: 0.99, liquidez: 3000, note: 'Funds Explorer — vacância e liquidez estimadas' },
+        HGRU11: { adminFee: 0.7,  vacancy: 2.0, dy12m: 9.59,  pvp: 1.01, liquidez: 2000, note: 'Funds Explorer — vacância e liquidez estimadas' },
+        KNRI11: { adminFee: 0.75, vacancy: 8.0, dy12m: 7.79,  pvp: 0.98, liquidez: 3500, note: 'Funds Explorer — taxa/vacância/liquidez estimadas' },
+        HGCR11: { adminFee: 0.8,  vacancy: 0,   dy12m: 12.5,  pvp: 0.98, liquidez: 2000, note: 'Funds Explorer — liquidez estimada' },
+        RECR11: { adminFee: 0.2,  vacancy: 0,   dy12m: 13.09, pvp: 0.91, liquidez: 1500, note: 'Funds Explorer — liquidez estimada' },
+        BTLG11: { adminFee: 0.6,  vacancy: 2.5, dy12m: 9.2,   pvp: 0.95, liquidez: 4000, note: 'Referência estimada — verificar em Funds Explorer' },
+        VILG11: { adminFee: 0.75, vacancy: 6.0, dy12m: 8.8,   pvp: 0.88, liquidez: 1500, note: 'Referência estimada — verificar em Funds Explorer' },
+        IRDM11: { adminFee: 0.5,  vacancy: 0,   dy12m: 11.5,  pvp: 0.95, liquidez: 2500, note: 'Referência estimada — verificar em Funds Explorer' },
+        CPTS11: { adminFee: 0.85, vacancy: 0,   dy12m: 12.2,  pvp: 0.97, liquidez: 3000, note: 'Referência estimada — verificar em Funds Explorer' },
+        VISC11: { adminFee: 0.75, vacancy: 3.5, dy12m: 9.5,   pvp: 0.92, liquidez: 2000, note: 'Referência estimada — verificar em Funds Explorer' },
+        HSML11: { adminFee: 0.6,  vacancy: 4.0, dy12m: 10.8,  pvp: 0.96, liquidez: 1800, note: 'Referência estimada — verificar em Funds Explorer' },
+        PVBI11: { adminFee: 0.65, vacancy: 10.0,dy12m: 8.0,   pvp: 0.85, liquidez: 1500, note: 'Referência estimada — verificar em Funds Explorer' },
+        VGIR11: { adminFee: 0.5,  vacancy: 0,   dy12m: 13.5,  pvp: 0.98, liquidez: 1200, note: 'Referência estimada — verificar em Funds Explorer' },
+        RZAG11: { adminFee: 0.9,  vacancy: 0,   dy12m: 14.0,  pvp: 0.95, liquidez: 800,  note: 'Referência estimada — verificar em Funds Explorer' },
+        RBRF11: { adminFee: 0.6,  vacancy: 0,   dy12m: 10.5,  pvp: 0.93, liquidez: 900,  note: 'Referência estimada — verificar em Funds Explorer' },
+      }
+    };
+
+    let state = loadState();
+    let projection = [];
+    refreshCriteria();
+    ensureSearchState();
+    const snapshotChanged = autoFillSnapshotMetrics({ onlyBlank: true, save: false });
+    if (snapshotChanged) saveState();
+
+    function loadState() {
+      try {
+        return { ...defaults, ...JSON.parse(localStorage.getItem(storageKey) || '{}') };
+      } catch {
+        return { ...defaults };
+      }
+    }
+
+    function ensureSearchState() {
+      state.stockScreen = state.stockScreen || {};
+      state.fiiScreen = state.fiiScreen || {};
+      for (const [ticker] of stocks) {
+        state.stockScreen[ticker] = { ...blankMetrics(stockCriteria), ...(state.stockScreen[ticker] || {}) };
+      }
+      for (const [ticker] of fiis) {
+        state.fiiScreen[ticker] = { ...blankMetrics(fiiCriteria), ...(state.fiiScreen[ticker] || {}) };
+      }
+    }
+
+    function blankMetrics(criteria) {
+      return Object.fromEntries(criteria.map(([key]) => [key, '']));
+    }
+
+    function isBlankMetric(value) {
+      return value === '' || value === null || value === undefined;
+    }
+
+    function autoFillSnapshotMetrics({ onlyBlank = true, save = true } = {}) {
+      let changed = false;
+      const applyGroup = (bucket, snapshot) => {
+        for (const [ticker, values] of Object.entries(snapshot)) {
+          bucket[ticker] = bucket[ticker] || {};
+          for (const [key, value] of Object.entries(values)) {
+            if (key === 'note' || key === 'error') continue;
+            if (value === '' || value === null || value === undefined) continue;
+            if (!onlyBlank || isBlankMetric(bucket[ticker][key])) {
+              bucket[ticker][key] = value;
+              changed = true;
+            }
+          }
+        }
+      };
+      applyGroup(state.stockScreen, screenerSnapshot.stocks);
+      applyGroup(state.fiiScreen, screenerSnapshot.fiis);
+      state.screenerSnapshotAppliedAt = screenerSnapshot.date;
+      if (save) saveState();
+      return changed;
+    }
+
+    function saveState() {
+      localStorage.setItem(storageKey, JSON.stringify(state));
+      const el = document.getElementById('saveStatus');
+      el.textContent = 'Alterações salvas neste aparelho';
+      window.clearTimeout(saveState.timer);
+      saveState.timer = window.setTimeout(() => el.textContent = 'Pronto para editar no celular', 1500);
+    }
+
+    function recordSync() {
+      if (!state.syncHistory) state.syncHistory = [];
+      const total = state.reserve + state.stocks + state.fiis + state.rfLong;
+      const entry = {
+        date: new Date().toISOString(),
+        reserve: state.reserve,
+        stocks: state.stocks,
+        fiis: state.fiis,
+        rfLong: state.rfLong,
+        total
+      };
+      state.syncHistory.push(entry);
+      saveState();
+      renderSyncStatus();
+    }
+
+    function renderSyncStatus() {
+      const el = document.getElementById('syncStatus');
+      if (!el) return;
+      const history = state.syncHistory || [];
+      const currentTotal = state.reserve + state.stocks + state.fiis + state.rfLong;
+
+      if (!history.length) {
+        el.innerHTML = `<div class="sync-panel">
+          <div class="sync-info"><small>Nenhum registro</small><strong>Registre o saldo atual para acompanhar a evolução</strong></div>
+        </div>`;
+        return;
+      }
+
+      const last = history[history.length - 1];
+      const lastDate = new Date(last.date);
+      const dateStr = lastDate.toLocaleDateString('pt-BR') + ' ' + lastDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      const prev = history.length >= 2 ? history[history.length - 2] : null;
+      let deltaHtml = '';
+      if (prev) {
+        const diff = last.total - prev.total;
+        const cls = diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat';
+        const sign = diff > 0 ? '+' : '';
+        deltaHtml = `<span class="sync-delta ${cls}">${sign}${BRL.format(diff)} desde registro anterior</span>`;
+      }
+
+      el.innerHTML = `<div class="sync-panel">
+        <div class="sync-info">
+          <small>Último registro: ${dateStr}</small>
+          <strong>${BRL.format(last.total)}</strong>
+          ${deltaHtml}
+        </div>
+        <div class="sync-info">
+          <small>Total atual (editado)</small>
+          <strong>${BRL.format(currentTotal)}</strong>
+        </div>
+        <div class="sync-info">
+          <small>Registros</small>
+          <strong>${history.length}</strong>
+        </div>
+      </div>`;
+    }
+
+    function renderSyncHistory() {
+      const table = document.getElementById('syncHistoryTable');
+      if (!table) return;
+      const history = (state.syncHistory || []).slice().reverse();
+      if (!history.length) {
+        table.innerHTML = '<tr><td>Nenhum registro ainda.</td></tr>';
+        return;
+      }
+      table.innerHTML = `
+        <thead><tr><th>Data</th><th class="num">Reserva</th><th class="num">Ações</th><th class="num">FIIs</th><th class="num">RF longa</th><th class="num">Total</th></tr></thead>
+        <tbody>${history.map(h => {
+          const d = new Date(h.date);
+          return `<tr>
+            <td>${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</td>
+            <td class="num">${BRL.format(h.reserve)}</td>
+            <td class="num">${BRL.format(h.stocks)}</td>
+            <td class="num">${BRL.format(h.fiis)}</td>
+            <td class="num">${BRL.format(h.rfLong)}</td>
+            <td class="num"><strong>${BRL.format(h.total)}</strong></td>
+          </tr>`;
+        }).join('')}</tbody>`;
+    }
+
+    function monthlyRate(annual) {
+      return Math.pow(1 + Number(annual || 0), 1 / 12) - 1;
+    }
+
+    function makeMonths() {
+      const out = [];
+      for (let y = 2026, m = 5; y < 2036; m++) {
+        if (m > 11) { m = 0; y++; }
+        out.push(new Date(y, m, 1));
+        if (y === 2035 && m === 11) break;
+      }
+      return out;
+    }
+
+    function calcProjection() {
+      let reserve = Number(state.reserve);
+      let rfLong = Number(state.rfLong);
+      let actions = Number(state.stocks);
+      let fiiBalance = Number(state.fiis);
+      const rows = [];
+
+      for (const date of makeMonths()) {
+        const year = date.getFullYear();
+        const priorReserve = reserve;
+        const priorLong = rfLong;
+        const priorStocks = actions;
+        const priorFiis = fiiBalance;
+        const inPhase1 = priorReserve < state.reserveTarget;
+
+        let cdb = 0;
+        let longContribution = 0;
+        let stockContribution = 0;
+        let fiiContribution = 0;
+
+        if (inPhase1) {
+          const plannedCdb = state.monthly * state.phase1ReservePct;
+          cdb = Math.min(plannedCdb, Math.max(0, state.reserveTarget - priorReserve));
+          const phase1Rv = state.monthly * state.phase1RvPct;
+          const leftover = Math.max(0, state.monthly - cdb - phase1Rv);
+          longContribution = leftover * state.postRfLongPct;
+          stockContribution = phase1Rv * state.stocksWithinRv + leftover * state.postRvPct * state.stocksWithinRv;
+          fiiContribution = phase1Rv * state.fiisWithinRv + leftover * state.postRvPct * state.fiisWithinRv;
+        } else {
+          longContribution = state.monthly * state.postRfLongPct;
+          stockContribution = state.monthly * state.postRvPct * state.stocksWithinRv;
+          fiiContribution = state.monthly * state.postRvPct * state.fiisWithinRv;
+        }
+
+        const cdbAnnual = getCdbRates()[year] ?? state.cdbAfter2030;
+        const cdbReturn = (priorReserve + cdb) * monthlyRate(cdbAnnual);
+        const longReturn = (priorLong + longContribution) * monthlyRate(state.rfLongAnnual);
+        const stockReturn = (priorStocks + stockContribution) * (monthlyRate(state.stockDivAnnual) + monthlyRate(state.stockAppAnnual));
+        const fiiReturn = (priorFiis + fiiContribution) * (monthlyRate(state.fiiDivAnnual) + monthlyRate(state.fiiAppAnnual));
+
+        reserve += cdb + cdbReturn;
+        rfLong += longContribution + longReturn;
+        actions += stockContribution + stockReturn;
+        fiiBalance += fiiContribution + fiiReturn;
+
+        rows.push({
+          date,
+          label: monthLabel(date),
+          year,
+          phase: inPhase1 ? 'Fase 1' : 'Fase 2',
+          cdb,
+          longContribution,
+          stockContribution,
+          fiiContribution,
+          cdbReturn,
+          longReturn,
+          stockReturn,
+          fiiReturn,
+          reserve,
+          rfLong,
+          actions,
+          fiis: fiiBalance,
+          total: reserve + rfLong + actions + fiiBalance,
+          rvPct: (actions + fiiBalance) / (reserve + rfLong + actions + fiiBalance),
+          rfLongPct: rfLong / (reserve + rfLong + actions + fiiBalance)
+        });
+      }
+      projection = rows;
+      return rows;
+    }
+
+    function monthLabel(date) {
+      return MONTH.format(date).replace('.', '').replace(' de ', '/');
+    }
+
+    function yearSummary(rows) {
+      return Array.from({ length: 10 }, (_, i) => {
+        const year = 2026 + i;
+        const row = rows.findLast(r => r.year === year);
+        const passive = rows
+          .filter(r => r.year === year)
+          .reduce((sum, r) => sum + r.stockReturn + r.fiiReturn, 0) / 12;
+        return { year, total: row?.total ?? 0, goal: state.goal, passive };
+      });
+    }
+
+    function nextPlan() {
+      return projection[0];
+    }
+
+    function update() {
+      const rows = calcProjection();
+      const currentTotal = state.reserve + state.stocks + state.fiis + state.rfLong;
+      const reserveDate = rows.find(r => r.reserve >= state.reserveTarget)?.label || 'já atingida';
+      const goalDate = rows.find(r => r.total >= state.goal)?.label || 'após 2035';
+      const summary = yearSummary(rows);
+
+      document.getElementById('kTotal').textContent = BRL.format(currentTotal);
+      document.getElementById('kPhase').textContent = state.reserve < state.reserveTarget ? 'Fase 1 - completar reserva' : 'Fase 2 - 80% RV / 20% RF longa';
+      document.getElementById('kGoal').textContent = BRL.format(state.goal);
+      document.getElementById('kGoalDate').textContent = `atinge em ${goalDate}`;
+      document.getElementById('kReserve').textContent = `${BRL.format(state.reserve)} / ${BRL.format(state.reserveTarget)}`;
+      document.getElementById('kReserveDate').textContent = `reserva em ${reserveDate}`;
+      document.getElementById('kPassive').textContent = BRL.format(summary.at(-1).passive);
+
+      renderAllocations();
+      renderPurchaseTable();
+      renderMonthlyTable(rows);
+      renderCriteriaThresholds();
+      renderScreenerTables();
+      renderSyncStatus();
+      drawBarChart(document.getElementById('barChart'), [
+        ['Reserva CDB', state.reserve, '#1d6f99'],
+        ['RF longa', state.rfLong, '#2f7d59'],
+        ['Ações', state.stocks, '#d96c2c'],
+        ['FIIs', state.fiis, '#7b5fc7']
+      ]);
+      drawLineChart(document.getElementById('lineChart'), summary);
+    }
+
+    function allocationRow(name, value, max, color) {
+      return `
+        <div class="row">
+          <div>
+            <strong>${name}</strong>
+            <div class="bar"><i style="--w:${max ? Math.max(2, (value / max) * 100) : 0}%;background:${color}"></i></div>
+          </div>
+          <strong>${BRL2.format(value)}</strong>
+        </div>`;
+    }
+
+    function renderAllocations() {
+      const next = nextPlan();
+      const maxNext = Math.max(next.cdb, next.longContribution, next.stockContribution, next.fiiContribution);
+      document.getElementById('nextAllocation').innerHTML = [
+        allocationRow('CDB reserva', next.cdb, maxNext, '#1d6f99'),
+        allocationRow('RF longa', next.longContribution, maxNext, '#2f7d59'),
+        allocationRow('Ações', next.stockContribution, maxNext, '#d96c2c'),
+        allocationRow('FIIs', next.fiiContribution, maxNext, '#7b5fc7')
+      ].join('');
+
+      const post = {
+        rf: state.monthly * state.postRfLongPct,
+        stocks: state.monthly * state.postRvPct * state.stocksWithinRv,
+        fiis: state.monthly * state.postRvPct * state.fiisWithinRv
+      };
+      const maxPost = Math.max(post.rf, post.stocks, post.fiis);
+      document.getElementById('postAllocation').innerHTML = [
+        allocationRow('RF longa', post.rf, maxPost, '#2f7d59'),
+        allocationRow('Ações', post.stocks, maxPost, '#d96c2c'),
+        allocationRow('FIIs', post.fiis, maxPost, '#7b5fc7'),
+        allocationRow('Total', state.monthly, state.monthly, '#163b57')
+      ].join('');
+    }
+
+    function renderPurchaseTable() {
+      const next = nextPlan();
+      const phase2 = {
+        rf: state.monthly * state.postRfLongPct,
+        stockBase: state.monthly * state.postRvPct * state.stocksWithinRv,
+        fiiBase: state.monthly * state.postRvPct * state.fiisWithinRv
+      };
+      const currentStock = screenedAllocation('stock', stocks, next.stockContribution);
+      const currentFii = screenedAllocation('fii', fiis, next.fiiContribution);
+      const phase2Stock = screenedAllocation('stock', stocks, phase2.stockBase);
+      const phase2Fii = screenedAllocation('fii', fiis, phase2.fiiBase);
+      const rows = [];
+      rows.push({ section: 'Fase atual' });
+      rows.push({ name: 'CDB liquidez diária', weight: '100,0%', base: BRL2.format(next.cdb), value: BRL2.format(next.cdb), role: 'Reserva', rec: '<span class="badge ok">Manter</span>' });
+      rows.push({ name: 'Ações - subtotal', weight: '', base: BRL2.format(next.stockContribution), value: BRL2.format(currentStock.total), role: state.applyScreenerToPurchases ? 'Aprovadas' : 'RV', rec: filterNote(currentStock) });
+      for (const item of currentStock.rows) rows.push(purchaseAssetRow(item, next.stockContribution));
+      rows.push({ name: 'FIIs - subtotal', weight: '', base: BRL2.format(next.fiiContribution), value: BRL2.format(currentFii.total), role: state.applyScreenerToPurchases ? 'Aprovados' : 'RV', rec: filterNote(currentFii) });
+      for (const item of currentFii.rows) rows.push(purchaseAssetRow(item, next.fiiContribution));
+      rows.push({ section: 'Pós-reserva' });
+      rows.push({ name: 'RF longa', weight: '100,0%', base: BRL2.format(phase2.rf), value: BRL2.format(phase2.rf), role: '20% pós-reserva', rec: '<span class="badge ok">Manter</span>' });
+      rows.push({ name: 'Ações - subtotal', weight: '', base: BRL2.format(phase2.stockBase), value: BRL2.format(phase2Stock.total), role: state.applyScreenerToPurchases ? 'Aprovadas' : '32% do aporte', rec: filterNote(phase2Stock) });
+      for (const item of phase2Stock.rows) rows.push(purchaseAssetRow(item, phase2.stockBase));
+      rows.push({ name: 'FIIs - subtotal', weight: '', base: BRL2.format(phase2.fiiBase), value: BRL2.format(phase2Fii.total), role: state.applyScreenerToPurchases ? 'Aprovados' : '48% do aporte', rec: filterNote(phase2Fii) });
+      for (const item of phase2Fii.rows) rows.push(purchaseAssetRow(item, phase2.fiiBase));
+
+      document.getElementById('purchaseTable').innerHTML = `
+        <thead><tr><th>Ativo</th><th class="num">Peso</th><th class="num">Base</th><th class="num">Valor</th><th>Papel</th><th>Sistema</th></tr></thead>
+        <tbody>${rows.map(r => r.section
+          ? `<tr><td colspan="6"><span class="phase-tag">${r.section}</span></td></tr>`
+          : `<tr><td>${r.name}</td><td class="num">${r.weight}</td><td class="num">${r.base}</td><td class="num">${r.value}</td><td>${r.role}</td><td>${r.rec}</td></tr>`
+        ).join('')}</tbody>`;
+    }
+
+    function screenedAllocation(type, items, base) {
+      const rows = items.map(([ticker, name, weight]) => {
+        const rec = recommendationFor(type, ticker);
+        return { ticker, name, originalWeight: weight, rec };
+      });
+      const isApproved = kind => kind === 'ok' || kind === 'warn';
+      const approvedWeight = rows.filter(row => isApproved(row.rec.kind)).reduce((sum, row) => sum + row.originalWeight, 0);
+      let total = 0;
+      for (const row of rows) {
+        if (state.applyScreenerToPurchases) {
+          const active = isApproved(row.rec.kind) && approvedWeight > 0;
+          row.displayWeight = active ? row.originalWeight / approvedWeight : row.originalWeight;
+          row.value = active ? base * row.displayWeight : 0;
+        } else {
+          row.displayWeight = row.originalWeight;
+          row.value = base * row.originalWeight;
+        }
+        total += row.value;
+      }
+      return { rows, total, approvedWeight };
+    }
+
+    function purchaseAssetRow(item, base) {
+      return {
+        name: item.ticker,
+        weight: PCT.format(item.displayWeight),
+        base: BRL2.format(base),
+        value: BRL2.format(item.value),
+        role: item.name,
+        rec: statusBadge(item.rec)
+      };
+    }
+
+    function filterNote(group) {
+      if (!state.applyScreenerToPurchases) return '<span class="badge warn">Filtro desligado</span>';
+      if (group.approvedWeight > 0) return '<span class="badge ok">Só aprovados</span>';
+      return '<span class="badge bad">Sem aprovados</span>';
+    }
+
+    function renderMonthlyTable(rows) {
+      document.getElementById('monthlyTable').innerHTML = `
+        <thead><tr>
+          <th>Mês</th><th>Fase</th><th class="num">CDB</th><th class="num">RF longa</th><th class="num">Ações</th><th class="num">FIIs</th><th class="num">Patrimônio</th><th class="num">% RV</th>
+        </tr></thead>
+        <tbody>${rows.map(r => `<tr>
+          <td>${r.label}</td><td>${r.phase}</td><td class="num">${BRL.format(r.cdb)}</td><td class="num">${BRL.format(r.longContribution)}</td><td class="num">${BRL.format(r.stockContribution)}</td><td class="num">${BRL.format(r.fiiContribution)}</td><td class="num">${BRL.format(r.total)}</td><td class="num">${PCT.format(r.rvPct)}</td>
+        </tr>`).join('')}</tbody>`;
+    }
+
+    function renderScreenerTables() {
+      renderScreenerTable({
+        tableId: 'stockScreenTable',
+        rows: stocks,
+        storage: state.stockScreen,
+        criteria: stockCriteria,
+        type: 'stock',
+        sources: ticker => [
+          ['Status', `https://statusinvest.com.br/acoes/${ticker.toLowerCase()}`],
+          ['Fundamentei', `https://fundamentei.com/br/${ticker.toLowerCase()}/valuation?tab=PROFITABILITY`]
+        ]
+      });
+
+      renderScreenerTable({
+        tableId: 'fiiScreenTable',
+        rows: fiis,
+        storage: state.fiiScreen,
+        criteria: fiiCriteria,
+        type: 'fii',
+        sources: ticker => [
+          ['Funds Explorer', `https://www.fundsexplorer.com.br/funds/${ticker.toLowerCase()}`],
+          ['FIIs', `https://fiis.com.br/${ticker.toLowerCase()}`]
+        ]
+      });
+      renderRecommendationSummary();
+    }
+
+    function renderScreenerTable({ tableId, rows, storage, criteria, type, sources }) {
+      const table = document.getElementById(tableId);
+      if (!table) return;
+      table.innerHTML = `
+        <thead><tr>
+          <th>Ativo</th>
+          ${criteria.map(([, label, , hint]) => `<th class="num" title="${hint}">${label}</th>`).join('')}
+          <th>Recomendação</th>
+          <th>Falhas</th>
+          <th>Fontes</th>
+        </tr></thead>
+        <tbody>${rows.map(([ticker, name]) => {
+          const values = storage[ticker] || blankMetrics(criteria);
+          const verdict = recommendationFor(type, ticker);
+          return `<tr data-row-screen="${type}" data-row-ticker="${ticker}">
+            <td><strong>${ticker}</strong><br><span style="color:var(--muted)">${name}</span></td>
+            ${criteria.map(([key]) => `<td class="num"><input class="metric-input" inputmode="decimal" type="number" step="0.01" value="${escapeAttr(values[key])}" data-screen="${type}" data-ticker="${ticker}" data-key="${key}" aria-label="${ticker} ${key}"></td>`).join('')}
+            <td data-verdict-cell>${statusBadge(verdict)}</td>
+            <td data-detail-cell>${verdict.detail}</td>
+            <td><div class="source-links">${sources(ticker).map(([label, href]) => `<a href="${href}" target="_blank" rel="noopener">${label}</a>`).join('')}</div></td>
+          </tr>`;
+        }).join('')}</tbody>`;
+
+      table.querySelectorAll('input[data-screen]').forEach(input => {
+        input.addEventListener('input', () => {
+          const bucket = input.dataset.screen === 'stock' ? state.stockScreen : state.fiiScreen;
+          bucket[input.dataset.ticker] = bucket[input.dataset.ticker] || {};
+          bucket[input.dataset.ticker][input.dataset.key] = input.value;
+          saveState();
+          const verdict = recommendationFor(input.dataset.screen, input.dataset.ticker);
+          const row = input.closest('tr');
+          row.querySelector('[data-verdict-cell]').innerHTML = statusBadge(verdict);
+          row.querySelector('[data-detail-cell]').textContent = verdict.detail;
+          renderRecommendationSummary();
+          renderPurchaseTable();
+        });
+      });
+    }
+
+    function recommendationFor(type, ticker) {
+      const criteria = type === 'stock' ? stockCriteria : fiiCriteria;
+      const storage = type === 'stock' ? state.stockScreen : state.fiiScreen;
+      const verdict = evaluateCriteria(storage[ticker] || blankMetrics(criteria), criteria);
+      const note = snapshotNoteFor(type, ticker);
+      return note ? { ...verdict, detail: `${verdict.detail}. ${note}` } : verdict;
+    }
+
+    function snapshotNoteFor(type, ticker) {
+      const source = type === 'stock' ? screenerSnapshot.stocks : screenerSnapshot.fiis;
+      return source[ticker]?.note || '';
+    }
+
+    function evaluateCriteria(values, criteria) {
+      const parsed = criteria.map(([key, label, test]) => {
+        const raw = values[key];
+        const value = raw === '' || raw === null || raw === undefined ? NaN : Number(String(raw).replace(',', '.'));
+        return { key, label, value, ok: Number.isFinite(value) && test(value), filled: Number.isFinite(value) };
+      });
+      const missing = parsed.filter(item => !item.filled);
+      const failed = parsed.filter(item => item.filled && !item.ok);
+      const passed = parsed.filter(item => item.ok);
+      const score = passed.length;
+      const total = criteria.length;
+      const scoreDots = parsed.map(item => !item.filled ? 'miss' : item.ok ? 'pass' : 'fail');
+
+      if (missing.length === parsed.length) {
+        return { kind: 'pending', text: 'Pesquisar', detail: 'Sem dados', score, total, scoreDots };
+      }
+      if (!failed.length && !missing.length) {
+        return { kind: 'ok', text: 'Recomendar', detail: 'Todos os critérios passam', score, total, scoreDots };
+      }
+      const parts = [];
+      if (failed.length) parts.push(`Falha: ${failed.map(i => i.label).join(', ')}`);
+      if (missing.length) parts.push(`Sem dado: ${missing.map(i => i.label).join(', ')}`);
+
+      const filledCount = parsed.length - missing.length;
+      const passRate = filledCount > 0 ? score / filledCount : 0;
+      const kind = passRate >= 0.7 && missing.length <= 1 ? 'warn' : 'bad';
+      const text = kind === 'warn' ? 'Atenção' : 'Não recomendar';
+
+      return { kind, text, detail: parts.join('. '), score, total, scoreDots };
+    }
+
+    function renderCriteriaThresholds() {
+      const stockList = document.getElementById('stockCriteriaList');
+      const fiiList = document.getElementById('fiiCriteriaList');
+      if (!stockList || !fiiList) return;
+
+      const t = state.stockCriteriaThresholds || defaults.stockCriteriaThresholds;
+      const ft = state.fiiCriteriaThresholds || defaults.fiiCriteriaThresholds;
+
+      const stockItems = [
+        { key: 'cagr', label: 'CAGR', op: '>', unit: '%' },
+        { key: 'roe', label: 'ROE', op: '>', unit: '%' },
+        { key: 'margin', label: 'Margem de lucro', op: '>', unit: '%' },
+        { key: 'debtEbitda', label: 'Dívida líquida / EBITDA', op: '<', unit: 'x' },
+        { key: 'pl', label: 'P/L', op: '<', unit: '' },
+        { key: 'dy', label: 'Dividend Yield', op: '>', unit: '%' },
+        { key: 'payout', label: 'Payout', op: '<', unit: '%' },
+      ];
+
+      const fiiItems = [
+        { key: 'adminFee', label: 'Taxa de administração', op: '<', unit: '%' },
+        { key: 'vacancy', label: 'Vacância', op: '<', unit: '%' },
+        { key: 'dy12m', label: 'Dividend yield 12 meses', op: '>', unit: '%' },
+        { key: 'pvp', label: 'P/VP', op: '<=', unit: '' },
+        { key: 'liquidez', label: 'Liquidez diária (mil R$)', op: '>', unit: '' },
+      ];
+
+      function renderList(el, items, thresholds, stateKey) {
+        el.innerHTML = items.map(item => {
+          const opLabel = item.op === '>' ? 'acima de' : item.op === '<' ? 'abaixo de' : 'até';
+          return `<li>
+            <span>${item.label}</span>
+            <span class="criteria-threshold">
+              <select data-tkey="${stateKey}" data-field="${item.key}" data-part="op">
+                <option value=">" ${item.op === '>' ? 'selected' : ''}>&gt;</option>
+                <option value="<" ${item.op === '<' ? 'selected' : ''}>&lt;</option>
+                <option value="<=" ${item.op === '<=' ? 'selected' : ''}>&le;</option>
+              </select>
+              <input type="number" step="0.1" value="${thresholds[item.key]}" data-tkey="${stateKey}" data-field="${item.key}">
+              <span>${item.unit}</span>
+            </span>
+          </li>`;
+        }).join('');
+
+        el.querySelectorAll('input, select').forEach(input => {
+          input.addEventListener('change', () => {
+            const tkey = input.dataset.tkey;
+            const field = input.dataset.field;
+            if (input.tagName === 'INPUT') {
+              state[tkey][field] = Number(input.value || 0);
+            }
+            refreshCriteria();
+            saveState();
+            update();
+          });
+        });
+      }
+
+      renderList(stockList, stockItems, t, 'stockCriteriaThresholds');
+      renderList(fiiList, fiiItems, ft, 'fiiCriteriaThresholds');
+    }
+
+    function renderRecommendationSummary() {
+      const stockSummary = summarizeRecommendations('stock', stocks);
+      const fiiSummary = summarizeRecommendations('fii', fiis);
+      const stockEl = document.getElementById('stockRecommendationSummary');
+      const fiiEl = document.getElementById('fiiRecommendationSummary');
+      const toggle = document.getElementById('applyScreenerToPurchases');
+      if (toggle) toggle.checked = !!state.applyScreenerToPurchases;
+      renderSnapshotInfo();
+      if (stockEl) stockEl.innerHTML = summaryMarkup('Ações', stockSummary);
+      if (fiiEl) fiiEl.innerHTML = summaryMarkup('FIIs', fiiSummary);
+    }
+
+    function renderSnapshotInfo() {
+      const el = document.getElementById('screenerSnapshotInfo');
+      if (!el) return;
+      el.textContent = `Base automática: ${screenerSnapshot.date} | valores preservam edições manuais`;
+    }
+
+    function summarizeRecommendations(type, rows) {
+      const result = { ok: [], warn: [], bad: [], pending: [] };
+      for (const [ticker] of rows) {
+        const verdict = recommendationFor(type, ticker);
+        if (verdict.kind === 'ok') result.ok.push(ticker);
+        else if (verdict.kind === 'warn') result.warn.push(ticker);
+        else if (verdict.kind === 'bad') result.bad.push(ticker);
+        else result.pending.push(ticker);
+      }
+      return result;
+    }
+
+    function summaryMarkup(label, summary) {
+      const approved = summary.ok.length ? summary.ok.join(', ') : 'nenhum';
+      const attention = summary.warn.length ? summary.warn.join(', ') : 'nenhum';
+      return `
+        <strong>${label}</strong>
+        <div style="margin-top:8px">${statusBadge({ kind: 'ok', text: `${summary.ok.length} recomendar` })} ${statusBadge({ kind: 'warn', text: `${summary.warn.length} atenção` })} ${statusBadge({ kind: 'bad', text: `${summary.bad.length} não recomendar` })} ${statusBadge({ kind: 'pending', text: `${summary.pending.length} pesquisar` })}</div>
+        <p class="note" style="margin:8px 0 0">Aprovados: ${approved}</p>
+        <p class="note" style="margin:4px 0 0">Atenção (quase aprovados): ${attention}</p>`;
+    }
+
+    function statusBadge(verdict) {
+      const cls = verdict.kind === 'ok' ? 'ok' : verdict.kind === 'bad' ? 'bad' : 'warn';
+      const dots = verdict.scoreDots
+        ? `<span class="score-bar">${verdict.scoreDots.map(d => `<span class="dot ${d}"></span>`).join('')}<span class="score-label">${verdict.score}/${verdict.total}</span></span>`
+        : '';
+      return `<span class="badge ${cls}" title="${escapeAttr(verdict.detail || '')}">${verdict.text}</span>${dots}`;
+    }
+
+    function escapeAttr(value) {
+      return String(value ?? '').replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
+    }
+
+    function drawBarChart(canvas, items) {
+      const ctx = setupCanvas(canvas);
+      const { width, height } = canvas.getBoundingClientRect();
+      const pad = { l: 54, r: 12, t: 18, b: 42 };
+      const max = Math.max(...items.map(i => i[1]), 1) * 1.15;
+      ctx.clearRect(0, 0, width, height);
+      ctx.font = '12px system-ui';
+      ctx.fillStyle = '#5b6d78';
+      ctx.strokeStyle = '#d9e3e7';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const y = pad.t + (height - pad.t - pad.b) * i / 4;
+        ctx.beginPath();
+        ctx.moveTo(pad.l, y);
+        ctx.lineTo(width - pad.r, y);
+        ctx.stroke();
+        const value = max * (1 - i / 4);
+        ctx.fillText(BRL.format(value), 4, y + 4);
+      }
+      const gap = 18;
+      const barW = Math.max(26, (width - pad.l - pad.r - gap * (items.length - 1)) / items.length * 0.58);
+      const step = (width - pad.l - pad.r) / items.length;
+      items.forEach((item, i) => {
+        const x = pad.l + step * i + (step - barW) / 2;
+        const h = (height - pad.t - pad.b) * item[1] / max;
+        ctx.fillStyle = item[2];
+        ctx.fillRect(x, height - pad.b - h, barW, h);
+        ctx.fillStyle = '#142938';
+        ctx.textAlign = 'center';
+        ctx.fillText(item[0], x + barW / 2, height - 16);
+      });
+      ctx.textAlign = 'left';
+    }
+
+    function drawLineChart(canvas, points) {
+      const ctx = setupCanvas(canvas);
+      const { width, height } = canvas.getBoundingClientRect();
+      const pad = { l: 58, r: 18, t: 18, b: 38 };
+      const max = Math.max(state.goal, ...points.map(p => p.total)) * 1.12;
+      const plotW = width - pad.l - pad.r;
+      const plotH = height - pad.t - pad.b;
+      ctx.clearRect(0, 0, width, height);
+      ctx.font = '12px system-ui';
+      ctx.strokeStyle = '#d9e3e7';
+      ctx.fillStyle = '#5b6d78';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const y = pad.t + plotH * i / 4;
+        ctx.beginPath();
+        ctx.moveTo(pad.l, y);
+        ctx.lineTo(width - pad.r, y);
+        ctx.stroke();
+        ctx.fillText(BRL.format(max * (1 - i / 4)), 4, y + 4);
+      }
+      const yGoal = pad.t + plotH * (1 - state.goal / max);
+      ctx.strokeStyle = '#d96c2c';
+      ctx.beginPath();
+      ctx.moveTo(pad.l, yGoal);
+      ctx.lineTo(width - pad.r, yGoal);
+      ctx.stroke();
+      ctx.strokeStyle = '#1d6f99';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      points.forEach((p, i) => {
+        const x = pad.l + plotW * i / (points.length - 1);
+        const y = pad.t + plotH * (1 - p.total / max);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      ctx.fillStyle = '#142938';
+      ctx.textAlign = 'center';
+      points.forEach((p, i) => {
+        if (i % 2 === 0 || points.length <= 6) {
+          const x = pad.l + plotW * i / (points.length - 1);
+          ctx.fillText(p.year, x, height - 14);
+        }
+      });
+      ctx.textAlign = 'left';
+    }
+
+    function setupCanvas(canvas) {
+      const rect = canvas.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.max(1, Math.floor(rect.width * ratio));
+      canvas.height = Math.max(1, Math.floor(rect.height * ratio));
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      return ctx;
+    }
+
+    function buildInputs() {
+      const wrap = document.getElementById('inputs');
+      let html = '';
+      for (const group of fieldGroups) {
+        html += `<div class="form-section-title">${group.title}</div>`;
+        html += group.fields.map(([key, label, kind]) => {
+          const displayValue = kind === 'pct' ? (state[key] * 100).toFixed(1) : state[key];
+          return `
+          <label class="field">
+            <span>${label}${kind === 'pct' ? ' (%)' : ''}</span>
+            <input inputmode="decimal" type="number" step="${kind === 'pct' ? '0.1' : '1'}" data-key="${key}" data-kind="${kind}" value="${displayValue}">
+          </label>`;
+        }).join('');
+      }
+      wrap.innerHTML = html;
+      wrap.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', () => {
+          const val = Number(input.value || 0);
+          state[input.dataset.key] = input.dataset.kind === 'pct' ? val / 100 : val;
+          saveState();
+          update();
+        });
+      });
+      buildCdbRateInputs();
+    }
+
+    function buildCdbRateInputs() {
+      const wrap = document.getElementById('cdbRateInputs');
+      if (!wrap) return;
+      const cdbFields = [
+        ['cdbRate2026', '2026'], ['cdbRate2027', '2027'], ['cdbRate2028', '2028'],
+        ['cdbRate2029', '2029'], ['cdbRate2030', '2030'],
+      ];
+      wrap.innerHTML = cdbFields.map(([key, year]) => `
+        <label class="field">
+          <span>${year} (%)</span>
+          <input inputmode="decimal" type="number" step="0.01" data-key="${key}" data-kind="pct" value="${(state[key] * 100).toFixed(3)}">
+        </label>`).join('');
+      wrap.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', () => {
+          state[input.dataset.key] = Number(input.value || 0) / 100;
+          saveState();
+          update();
+        });
+      });
+    }
+
+    function download(name, mime, content) {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function toCsv() {
+      const rows = [['mes', 'fase', 'aporte_cdb', 'aporte_rf_longa', 'aporte_acoes', 'aporte_fiis', 'saldo_reserva', 'saldo_rf_longa', 'saldo_acoes', 'saldo_fiis', 'patrimonio_total']];
+      for (const r of projection) rows.push([r.label, r.phase, r.cdb, r.longContribution, r.stockContribution, r.fiiContribution, r.reserve, r.rfLong, r.actions, r.fiis, r.total]);
+      return rows.map(row => row.map(cell => `"${String(cell).replaceAll('"', '""')}"`).join(',')).join('\n');
+    }
+
+    document.querySelectorAll('.tab').forEach(button => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', String(b === button)));
+        document.querySelectorAll('main > section').forEach(s => s.hidden = s.id !== button.dataset.tab);
+        requestAnimationFrame(update);
+      });
+    });
+
+    document.getElementById('exportCsv').addEventListener('click', () => download('bussola_investimentos.csv', 'text/csv;charset=utf-8', toCsv()));
+    document.getElementById('exportJson').addEventListener('click', () => download('bussola_premissas.json', 'application/json', JSON.stringify({ state, projection }, null, 2)));
+    document.getElementById('applyScreenerToPurchases').addEventListener('change', event => {
+      state.applyScreenerToPurchases = event.target.checked;
+      saveState();
+      update();
+    });
+    document.getElementById('autoFillScreener').addEventListener('click', () => {
+      autoFillSnapshotMetrics({ onlyBlank: true, save: true });
+      update();
+    });
+    document.getElementById('reset').addEventListener('click', () => {
+      state = { ...defaults };
+      ensureSearchState();
+      refreshCriteria();
+      autoFillSnapshotMetrics({ onlyBlank: false, save: false });
+      localStorage.removeItem(storageKey);
+      buildInputs();
+      update();
+      saveState();
+    });
+
+    document.getElementById('recordSync').addEventListener('click', () => {
+      recordSync();
+      renderSyncHistory();
+    });
+
+    document.getElementById('toggleSyncHistory').addEventListener('click', () => {
+      const container = document.getElementById('syncHistoryContainer');
+      const btn = document.getElementById('toggleSyncHistory');
+      if (container.hidden) {
+        container.hidden = false;
+        btn.textContent = 'Ocultar histórico';
+        renderSyncHistory();
+      } else {
+        container.hidden = true;
+        btn.textContent = 'Ver histórico';
+      }
+    });
+
+    window.addEventListener('resize', () => requestAnimationFrame(update));
+
+    buildInputs();
+    update();
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
+</body>
+</html>
